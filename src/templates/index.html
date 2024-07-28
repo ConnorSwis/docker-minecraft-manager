@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Server Manager</title>
+</head>
+<body>
+    <h1>Minecraft Server Manager</h1>
+    <form id="serverForm">
+        <button type="submit">Create Server</button>
+    </form>
+    <div id="servers"></div>
+
+    <script>
+        document.getElementById('serverForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            fetch('/create-server', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => response.json())
+              .then(data => {
+                  console.log('Server created:', data);
+                  addServer(data.unique_id);
+              }).catch(error => {
+                  console.error('Error:', error);
+              });
+        });
+
+        function addServer(uniqueId) {
+            const serversDiv = document.getElementById('servers');
+            const serverDiv = document.createElement('div');
+            serverDiv.id = `server-${uniqueId}`;
+            serverDiv.innerHTML = `<p>Server ID: ${uniqueId} - Status: <span id="status-${uniqueId}">Checking...</span>
+            <button onclick="deleteServer('${uniqueId}')">Delete</button></p>`;
+            serversDiv.appendChild(serverDiv);
+            checkServerStatus(uniqueId);
+        }
+
+        function checkServerStatus(uniqueId) {
+            fetch(`/server-status/${uniqueId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const statusElement = document.getElementById(`status-${uniqueId}`);
+                    if (data.status === 'DELETED') {
+                        console.log('Server deleted:', uniqueId);
+                        const serverDiv = document.getElementById(`server-${uniqueId}`);
+                        if (serverDiv) {
+                            serverDiv.remove();
+                        }
+                    } else {
+                        statusElement.innerText = data.status === 'RUNNING' ? 'Server is running' : 'Server is not running';
+                        setTimeout(() => checkServerStatus(uniqueId), data.status === 'RUNNING' ? 5000 : 1000);
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                    setTimeout(() => checkServerStatus(uniqueId), 5000);
+                });
+        }
+
+        function deleteServer(uniqueId) {
+            fetch(`/delete-server/${uniqueId}`, {
+                method: 'DELETE'
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.status === 'DELETED') {
+                      const serverDiv = document.getElementById(`server-${uniqueId}`);
+                      serverDiv.remove();
+                  }
+              }).catch(error => {
+                  console.error('Error:', error);
+              });
+        }
+
+        function fetchServers() {
+            fetch('/servers')
+                .then(response => response.json())
+                .then(servers => {
+                    servers.forEach(server => addServer(server.unique_id));
+                }).catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        fetchServers();
+    </script>
+</body>
+</html>

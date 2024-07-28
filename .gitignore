@@ -1,0 +1,6 @@
+.venv/
+output.txt
+read-files.py
+__pycache__/
+*.db
+examples/
