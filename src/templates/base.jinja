@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}ConnorVerse{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/tailwind.css') }}" />
+  {% block head %}
+  {% endblock %}
+</head>
+
+<body class="min-h-screen">
+  {% block header %}
+  {% include 'components/header.jinja' %}
+  {% endblock %}
+
+  <div id="content" class="container p-4 mx-auto ">
+    {% block content %}
+    {% endblock %}
+  </div>
+
+  {% block footer %}
+  {% include 'components/footer.jinja' %}
+  {% endblock %}
+</body>
+
+</html>

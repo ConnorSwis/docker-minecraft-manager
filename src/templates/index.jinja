@@ -1,0 +1,82 @@
+{% extends "base.jinja" %}
+{% import "components/circle.jinja" as icon %}
+
+
+{% block title %}Minecraft Server Manager{% endblock %}
+
+{% block content %}
+<h1 class="w-full text-4xl text-center">ConnorVerse</h1>
+<form id="createServerForm" class="flex flex-col items-center">
+  <button type="submit"
+    class="mt-10 py-4 px-8 text-2xl font-semibold text-white transition-all duration-200 bg-green-600 rounded hover:bg-green-700 shadow-[4px_4px_12px_rgba(22,163,74,1)] hover:shadow-[4px_4px_20px_rgba(21,128,61,1)] focus:bg-green-900">Create
+    Server</button>
+</form>
+
+<h2>Existing Servers</h2>
+<ul id="serverList" class="list-none">
+  {% for server in servers %}
+  <li class="flex items-center flex-shrink gap-3">
+    <strong>Server ID:</strong> {{ server.unique_id }}
+    {% if server.status == "Stopped" %}
+    {{ icon.circle_icon(fill_color="#DD2E44") }}
+    {% elif server.status == "Running" %}
+    {{ icon.circle_icon(fill_color="#22C55E") }}
+    {% else %}
+    The service status is unknown.
+    {% endif %}
+    <button onclick="deleteServer('{{ server.unique_id }}')">Delete</button>
+  </li>
+  {% endfor %}
+</ul>
+
+<script>
+  document
+    .getElementById("createServerForm")
+    .addEventListener("submit", function (event) {
+      event.preventDefault();
+      fetch("/create-server", { method: "POST" })
+        .then((response) => response.json())
+        .then(() => fetchAndUpdateServers());
+    });
+
+
+  function fetchAndUpdateServers() {
+    fetch("/servers-status")
+      .then((response) => response.json())
+      .then((data) => {
+        const serverList = document.getElementById("serverList");
+        serverList.innerHTML = "";
+        data.servers.forEach((server) => {
+          const li = document.createElement("li");
+          li.classList.add("flex", "items-center", "gap-3", "flex-shrink");
+          const statusIcon = server.status === "Running" ? `{{ icon.circle_icon(fill_color = "#22C55E")
+        }}` : `{{ icon.circle_icon(fill_color = "#DD2E44") }}`;
+          li.innerHTML = `
+            <strong>Server ID:</strong> ${server.unique_id} ${statusIcon}
+            <button onclick="deleteServer('${server.unique_id}')">Delete</button>
+          `;
+          serverList.appendChild(li);
+        });
+      })
+      .catch((error) =>
+        console.error("Error fetching server statuses:", error)
+      );
+  }
+
+  function deleteServer(uniqueId) {
+    fetch(`/delete-server/${uniqueId}`, {
+      method: "DELETE",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "DELETED") {
+          fetchAndUpdateServers();
+        }
+      })
+      .catch((error) => console.error("Error deleting server:", error));
+  }
+
+  setInterval(fetchAndUpdateServers, 5000);
+  fetchAndUpdateServers();
+</script>
+{% endblock %}

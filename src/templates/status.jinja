@@ -1,0 +1,18 @@
+{% extends "base.jinja" %}
+
+{% block title %}Server Status{% endblock %}
+
+{% block content %}
+<h1>Server Status</h1>
+{% if server %}
+  <p>Server ID: {{ server.unique_id }}</p>
+  <p>Game Port: {{ server.game_port }}</p>
+  <p>RCON Port: {{ server.rcon_port }}</p>
+  <p>Status: Running</p>  <!-- Adjust status display based on actual server checks if needed -->
+  <form action="/delete-server/{{ server.unique_id }}" method="post">
+    <button type="submit">Delete Server</button>
+  </form>
+{% else %}
+  <p>No server found with this ID. It may have been deleted.</p>
+{% endif %}
+{% endblock %}
